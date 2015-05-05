@@ -1,0 +1,107 @@
+<html>
+<head>
+    <script src="//code.jquery.com/jquery-1.10.2.js"></script>
+    <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $.ajax({
+                url: "http://localhost:8080/person.service/rest/person",
+                success: function (data) {
+                    buildTable(data);
+                }
+            });
+        });
+        function buildTable(data) {
+            var tbl_body = "<tr><th>Surname</th><th>Name</th><th>Patronymic</th><th>Date of born</th><th>Action</th></tr>";
+            var odd_even = false;
+            $.each(data, function (i, item) {
+                var tbl_row = "";
+                tbl_row += "<td>" + item.surname + "</td>" + "<td>" + item.name + "</td>"
+                        + "<td>" + item.patronymic + "</td>" + "<td class='datepicker'>" + item.dob + "</td>";
+                tbl_row += "<td><button class=\"buttonRemove\" type=\"submit\" style=\"width: 30px; height: 30px\" alt=\"Remove record\"/></td>";
+                tbl_body += "<tr userid=\"" + item.id + "\" class=\"" + ( odd_even ? "odd" : "even") + "\">" + tbl_row + "</tr>";
+                odd_even = !odd_even;
+            });
+            tbl_body += "<tr><td><input class='psurname'/></td><td><input class='pname'/></td><td><input class='ppatronymic'/></td><td><input type=\"text\" class=\"datepicker\"/></td><td>" +
+                    "<button class=\"buttonSave\" type=\"submit\"style=\"width: 30px; height: 30px\" alt=\"Save record\"/></td></tr>";
+            $("#personsTable").html(tbl_body);
+            $(".datepicker").datepicker({dateFormat: 'dd.mm.yy'});
+            $(".buttonRemove").click(function () {
+                $.ajax({
+                    url: "http://localhost:8080/person.service/rest/person/" + $(event.target).closest("tr").attr('userid'),
+                    success: function (data) {
+                        buildTable(data);
+                    }
+                });
+            });
+            $(".buttonSave").click(function () {
+                if (validateRow($(event.target).closest("tr"))) {
+                    var data = {
+                        "name": $(event.target).closest("tr").find('.pname').val(),
+                        "surname": $(event.target).closest("tr").find('.psurname').val(),
+                        "patronymic": $(event.target).closest("tr").find('.ppatronymic').val(),
+                        "dob": $(event.target).closest("tr").find('.datepicker').val()
+                    }
+                    $.ajax({
+                        url: "http://localhost:8080/person.service/rest/person/new/" + JSON.stringify(data),
+                        contentType: "application/json",
+                        dataType: "json",
+                        success: function (data) {
+                            buildTable(data);
+                        }
+                    });
+                } else {
+                    alert("empty inputs!");
+                }
+            });
+
+        }
+        function validateRow(tr) {
+            if (tr.find('.pname').val().trim().length<=0||tr.find('.psurname').val().trim().length<=0
+            ||tr.find('.ppatronymic').val().trim().length<=0||tr.find('.datepicker').val().trim().length<=0) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+    </script>
+    <style>
+        table {
+            width: 100%;
+            text-align: center;
+        }
+
+        td, th, tr {
+            border: 1px solid black;
+        }
+
+        th {
+            height: 50px;
+        }
+
+        .buttonRemove {
+            background-image: url("https://cdn0.iconfinder.com/data/icons/large-glossy-icons/512/Delete.png");
+            background-size: cover;
+        }
+
+        .buttonSave {
+            background-image: url("http://www2.psd100.com/ppp/2013/11/0601/save-icon-1106085032.png");
+            background-size: cover;
+        }
+    </style>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>Person service</title>
+</head>
+<body>
+<section>
+    <article>
+        <header>
+            <h2 align="center">Person Service</h2>
+        </header>
+        <p>
+        <table id="personsTable"></table>
+    </article>
+</section>
+</body>
+</html>
